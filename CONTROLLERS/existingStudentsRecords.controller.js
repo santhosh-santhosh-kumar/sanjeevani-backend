@@ -15,16 +15,16 @@ const getAllExistingStudentsRecords = async (req, res) => {
 
 //corn scuhedule for update students payment status = false...................
 
-cron.schedule("* * * 1 *", async () => {
-  try {
-    await existingStudentsRecords.updateMany(
-      { payment_status: true },
-      { $set: { payment_status: false } }
-    );
-  } catch (error) {
-    console.error(error);
-  }
-});
+// cron.schedule("* * * 1 *", async () => {
+//   try {
+//     await existingStudentsRecords.updateMany(
+//       { payment_status: true },
+//       { $set: { payment_status: false } }
+//     );
+//   } catch (error) {
+//     console.error(error);
+//   }
+// });
 
 //get methode - single..............................................
 
@@ -46,20 +46,21 @@ const postExistingStudentsRecords = async (req, res) => {
   let {
     studentID,
     status,
-    name,
+    fullName,
     dob,
     age,
     gender,
     email,
-    curent_proffession,
+    currentStandard,
     fatherName,
     motherName,
-    father_conductMOB,
-    personal_conductMOB,
+    fatherPhone,
+    phone,
     individuals,
-    address,
+    residentialAddress,
     join_date,
     batchID,
+    userName,
     password,
     conform_password,
     student_info,
@@ -71,6 +72,7 @@ const postExistingStudentsRecords = async (req, res) => {
     paymentID,
     payment_status,
     paid_date,
+    paymentRecords,
     received_payment,
     paymentTotal,
     paymentDue,
@@ -79,12 +81,13 @@ const postExistingStudentsRecords = async (req, res) => {
     reason,
     noOfDaysLeave,
     leaveDate,
-    imageUrl
+    imageUrls,
+    filename,
   } = req.body;
-  received_payment = Number(received_payment);
-  console.log("req.body", req.body);
-  console.log("req.file", req.file);
 
+  console.log("req.body", req.body);
+  // console.log("req.file", req.file);
+  console.log(paymentRecords, received_payment);
   const day = String(today.getDate()).padStart(2, "0");
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const year = today.getFullYear();
@@ -104,46 +107,51 @@ const postExistingStudentsRecords = async (req, res) => {
   };
 
   let monthCount = today.getMonth() + 1;
-  let monthlyFee = Number(received_payment);
-  if(req.file){
-   imageUrl= `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`;
-  }else{
-  imageUrl = req.body.imageUrl;
+  let monthlyFee = received_payment;
+  if (req.file) {
+    imageUrls = `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`;
+    filename=req.file.filename
+  } else {
+    imageUrls = req.body.imageUrls;
+    filename = req.body.filename;
   }
-  
+
   // console.log(imageUrl);
   // const filename = req.file.filename;
 
   try {
     //find student Records...........................
 
-    const findStudentId = await existingStudentsRecords.findById(studentID);
+    const findStudentId = await existingStudentsRecords.findOne({
+      studentID: studentID,
+    });
 
     //if student not found...................
     if (!findStudentId) {
       console.log("student not found");
-      paymentTotal = Number(received_payment);
+      paymentTotal = received_payment;
       paymentDue = 0;
       dueMonthCount = 0;
-      leaveMonth = null;
+      leaveMonth = today.getMonth() + 1;
 
       const newStudent = new existingStudentsRecords({
         studentID,
         status,
-        name,
+        fullName,
         dob,
         age,
         gender,
         email,
-        curent_proffession,
+        currentStandard,
         fatherName,
         motherName,
-        father_conductMOB,
-        personal_conductMOB,
+        fatherPhone,
+        phone,
         individuals,
-        address,
+        residentialAddress,
         join_date,
         batchID,
+        userName,
         password,
         conform_password,
         student_info,
@@ -165,7 +173,7 @@ const postExistingStudentsRecords = async (req, res) => {
             paymentID,
             payment_status: true,
             paid_date: `${day}/${month}/${year}`,
-            received_payment: Number(received_payment),
+            received_payment,
           },
         ],
         paymentTotal,
@@ -183,7 +191,7 @@ const postExistingStudentsRecords = async (req, res) => {
             ],
           },
         ],
-        imageUrl,
+        imageUrls,
         filename,
       });
 
@@ -197,8 +205,7 @@ const postExistingStudentsRecords = async (req, res) => {
       //while amount paid ..............................
       if (paymentID) {
         console.log("Payment id......................");
-        let updatedPaymentTotal =
-          findStudentId.paymentTotal + Number(received_payment);
+        let updatedPaymentTotal = findStudentId.paymentTotal + received_payment;
         console.log("Payment id......................1");
         let updatedPaymentDue = Math.max(
           0,
@@ -206,9 +213,7 @@ const postExistingStudentsRecords = async (req, res) => {
         );
         let updatedDueMonthCount;
 
-        updatedDueMonthCount = Math.ceil(
-          updatedPaymentDue / Number(received_payment)
-        );
+        updatedDueMonthCount = Math.ceil(updatedPaymentDue / received_payment);
         console.log("Payment id......................2");
         findStudentId.paymentRecords.push({
           monthName: months[today.getMonth() + 1],
@@ -216,7 +221,7 @@ const postExistingStudentsRecords = async (req, res) => {
           paymentID,
           payment_status,
           paid_date: `${day}/${month}/${year}`,
-          received_payment: Number(received_payment),
+          received_payment: received_payment,
         });
         console.log("Payment id......................3");
         console.log(

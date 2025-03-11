@@ -1,5 +1,5 @@
 const studentsRecords = require("../MODEL/studentsRecords.model");
-const Counter=require("../MODEL/counter.model")
+const Counter = require("../MODEL/counter.model");
 const fs = require("fs");
 const { MongoClient, ObjectId } = require("mongodb");
 const cron = require("node-cron");
@@ -134,7 +134,7 @@ const postStudentsRecords = async (req, res) => {
 
     const studentID = `SSD${String(counter.seq).padStart(2, "0")}`;
     const newStudent = new studentsRecords({
-      studentID:studentID,
+      studentID: studentID,
       fullName,
       status,
       dob,
@@ -159,27 +159,18 @@ const postStudentsRecords = async (req, res) => {
           attentanceDate: null,
         },
       ],
-      paymentRecords: [
-        {
-          month: [
-            {
-              monthName,
-              paymentOderID,
-              paymentID,
-              payment_status,
-              paid_date,
-              received_payment: Math.floor(Number(received_payment) / 100),
-            },
-          ],
-        },
-      ],
+      monthName,
+      paymentOderID,
+      paymentID,
+      payment_status,
+      paid_date,
+      received_payment: Math.floor(Number(received_payment) / 100),
       paymentTotal,
       paymentDue,
       dueMonthCount,
       imageUrls: `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`,
       filename,
     });
-    console.log(password);
     await newStudent.save();
     res.status(201).send(newStudent);
   } catch (err) {

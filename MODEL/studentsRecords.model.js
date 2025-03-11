@@ -2,7 +2,7 @@ const express = require("express");
 const { Schema, model } = require("mongoose");
 
 const schema = new Schema({
-  studentID:{type: String, require: true},
+  studentID: { type: String, require: true },
   fullName: { type: String, require: true },
   status: { type: Boolean, require: true },
   dob: { type: String, require: true },
@@ -18,42 +18,36 @@ const schema = new Schema({
   join_date: { type: String },
   batchID: { type: String, require: true },
   student_info: { type: String, require: true },
-  attentance:[{
-    attentanceStatus:{type: Boolean,require: true },
-    attentanceDate:{type: String},
-  }],
+  attentance: [
+    {
+      attentanceStatus: { type: Boolean, require: true },
+      attentanceDate: { type: String },
+    },
+  ],
   imageUrls: { type: String },
   filename: { type: String },
-  paymentRecords:[
-    {
-    month:[
-      {
-        monthName:String,
-        paymentOderID:String,
-        paymentID:String,
-        payment_status: { type: Boolean,require: true},
-        paid_date: { type: String },
-        received_payment: { type: Number },
-        paymentPerMonthTotal:{type: Number,require: true },      
-      }
-    ]
-  }
-],
-  paymentTotal:{type: Number,require: true },
-  paymentDue:{type: Number,require: true },
-  dueMonthCount:{type: Number,require: true },
-  userName:{
-    type:String,
-    require:true,
-},
-password:{
-    type:String,
-    require:true,            
-},
-confirm_password:{
-  type:String,
-  require:true,            
-},
+  monthName: String,
+  paymentOderID: String,
+  paymentID: String,
+  payment_status: { type: Boolean, require: true },
+  paid_date: { type: String },
+  received_payment: { type: Number },
+  paymentPerMonthTotal: { type: Number, require: true },
+  paymentTotal: { type: Number, require: true },
+  paymentDue: { type: Number, require: true },
+  dueMonthCount: { type: Number, require: true },
+  userName: {
+    type: String,
+    require: true,
+  },
+  password: {
+    type: String,
+    require: true,
+  },
+  confirm_password: {
+    type: String,
+    require: true,
+  },
 });
 
 const studentsRecords = model("studentsRecords", schema);
