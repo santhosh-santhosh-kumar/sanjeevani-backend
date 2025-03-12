@@ -64,4 +64,48 @@ route.get("/", authorize, (req, res) => {
     res.send({ err: err.message });
   }
 });
+
+// sent opt verification email
+
+const sendOTPVerificationEmail = async ({_id,email},res)=>{
+  try{
+    const opt = `${Math.floor(1000 + Math.random() * 9000)}`;
+    const mailOptions = {
+      from: process.env.AUTH_EMAIL,
+      to:email,
+      subject:"Verify Your Email",
+      html:`<p>Enter <b>${opt}</b> in the app to verify your email address and complete the login in</p><br/>
+            <p>This code <b>expires in 1 hour</b>.</p>
+      `
+    }
+
+    const saltRounds = 10;
+    const hashedOTP = await bcrypt.hash(otp,saltRounds);
+    const newOTPVerification = await new UserOTPVerification({
+      userId:_id,
+      otp:hashedOTP,
+      createdAt:Date.now(),
+      expiresAt:Date.now() + 3600000,
+
+    })
+    
+    // save otp record
+    await newOTPVerification.save();
+    await transporter.sendMail(mailOptions);
+    res.json({
+      status:"PENDING",
+      message:"Verification otp email send",
+      data:{
+        userId:_id,
+        email,
+      }
+    })
+  }catch(error){
+    res.json({
+      status:"FAILED",
+      message:error.message,
+    });
+  }
+}
+
 module.exports = route;
