@@ -43,6 +43,31 @@ const getSingleExistingStudentsRecords = async (req, res) => {
 
 const postExistingStudentsRecords = async (req, res) => {
   const today = new Date();
+  const months = {
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
+  };
+
+  let monthCount = today.getMonth() + 1;
+  let attentanceData;
+  if (Array.isArray(req.body)) {
+    req.body?.map((value) => {
+      if (value.month == months[today.getMonth() + 1]) {
+        return (attentanceData = req.body);
+      }
+    });
+  }
+  console.log("attentanceData", attentanceData);
   let {
     studentID,
     status,
@@ -85,32 +110,16 @@ const postExistingStudentsRecords = async (req, res) => {
     filename,
   } = req.body;
 
-  console.log("req.body", req.body);
+  // console.log("req.body", req.body);
+
   // console.log("req.file", req.file);
-  console.log(paymentRecords, received_payment);
   const day = String(today.getDate()).padStart(2, "0");
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const year = today.getFullYear();
-  const months = {
-    1: "January",
-    2: "February",
-    3: "March",
-    4: "April",
-    5: "May",
-    6: "June",
-    7: "July",
-    8: "August",
-    9: "September",
-    10: "October",
-    11: "November",
-    12: "December",
-  };
-
-  let monthCount = today.getMonth() + 1;
   let monthlyFee = received_payment;
   if (req.file) {
     imageUrls = `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`;
-    filename=req.file.filename
+    filename = req.file.filename;
   } else {
     imageUrls = req.body.imageUrls;
     filename = req.body.filename;
@@ -127,7 +136,7 @@ const postExistingStudentsRecords = async (req, res) => {
     });
 
     //if student not found...................
-    if (!findStudentId) {
+    if (!findStudentId && !attentanceData) {
       console.log("student not found");
       paymentTotal = received_payment;
       paymentDue = 0;
@@ -197,6 +206,7 @@ const postExistingStudentsRecords = async (req, res) => {
 
       await newStudent.save();
       res.status(201).send(newStudent);
+
       console.log("New student records add................");
     } else {
       console.log("student  found");
@@ -238,28 +248,38 @@ const postExistingStudentsRecords = async (req, res) => {
 
       //while attentance update...................
 
-      if (attentanceStatus) {
+      //attendence
+      let findStudent
+      if (attentanceData) {
         attentancemonth = months[today.getMonth() + 1];
         console.log("attentanceStatus......................");
-        let attentanceEntry = findStudentId.attentance.find(
-          (entry) => entry.attentancemonth === attentancemonth
-        );
-        if (attentanceEntry) {
-          console.log("attentanceEntry.....................");
-          attentanceEntry.details.push({
-            attentanceStatus,
+        
+        for (let data of attentanceData) {
+          findStudent = await existingStudentsRecords.findOne({ studentID: data.studentId })
+          // console.log("findStudent",findStudent)
+          const newAttendance = {
+            attentanceStatus: data.attentanceStatus,
             attentanceDate: `${day}/${month}/${year}`,
-          });
-        } else {
-          console.log("new attentanceEntry.....................");
-          findStudentId.attentance.push({
-            attentancemonth,
-            details: [
-              { attentanceStatus, attentanceDate: `${day}/${month}/${year}` },
-            ],
-          });
-        }
-        findStudentId.markModified("attentance");
+          };
+          const existingMonthEntry = findStudent.attentance.find(
+            (entry) => entry.attentancemonth === data.month
+          );
+          
+          if (existingMonthEntry) {
+            console.log("entry new")
+            // If the month exists, add the new attendance status to that month
+            existingMonthEntry.details.push(newAttendance);
+          } else {
+            // If the month doesn't exist, create a new entry for the month
+            findStudent.attentance.push({
+              attentancemonth: data.month,
+              details: [newAttendance],
+            });
+          }
+          await findStudent.save();
+        };
+        
+        console.log("finish");
       }
 
       //Leave update.....................
@@ -280,11 +300,12 @@ const postExistingStudentsRecords = async (req, res) => {
         }
         findStudentId.markModified("leaveUpdation");
       }
-
+    if(!attentanceData){
       await findStudentId
-        .save()
-        .then(() => console.log("Student records updated and saved in MongoDB"))
-        .catch((err) => console.error(" Error saving Students:", err));
+      .save()
+      .then(() => console.log("Student records updated and saved in MongoDB"))
+      .catch((err) => console.error(" Error saving Students:", err));
+    }
       res.status(200).send("Student records updated");
     }
   } catch (err) {
