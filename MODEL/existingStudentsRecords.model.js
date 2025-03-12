@@ -30,6 +30,7 @@ const schema = new Schema({
         {
           attentanceStatus: { type: Boolean, require: true },
           attentanceDate: { type: Date },
+          day: { type: Number, require: true },
         },
       ],
     },
