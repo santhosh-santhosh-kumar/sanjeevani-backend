@@ -259,7 +259,7 @@ const postExistingStudentsRecords = async (req, res) => {
           findStudent = await existingStudentsRecords.findOne({ studentID: data.studentId })
           const newAttendance = {
             attentanceStatus: data.attentanceStatus,
-            attentanceDate: `${day}/${month}/${year}`,
+            attentanceDate:  new Date(`${year}-${month}-${day}`),
             day:`${day}`
           };
           const existingMonthEntry = findStudent.attentance.find(

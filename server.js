@@ -13,6 +13,7 @@ const adminLogin = require("./ROUTES/adminLogin.route");
 const studentRegister = require("./ROUTES/studentRegister.route");
 const studentLogin = require("./ROUTES/studentsLogin");
 const events = require("./ROUTES/events.route");
+const notice=require("./ROUTES/notice.route")
 const app = express();
 connectDB();
 app.use(cors());
@@ -30,6 +31,7 @@ app.use("/adminLogin", adminLogin);
 app.use("/studentRegister", studentRegister);
 app.use("/studentLogin", studentLogin);
 app.use("/events", events);
+app.use("/notice", notice);
 
 //app listen..................
 app.get("/", (req, res) => {
