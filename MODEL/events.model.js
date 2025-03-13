@@ -1,31 +1,30 @@
 const {model,Schema}=require("mongoose")
 
 const schema=new Schema({
-      events:[
-            {
-                  month:{type:String,require:true,},
-                  eventsList:[
-                        {
-                              eventName:{
-                                    type:String,
-                                    require:true,
-                              },
-                              eventDate:{
-                                    type:String,
-                                    require:true,            
-                              },
-                              remarks:{
-                                    type:String,
-                                    require:true,            
-                              },
-                              time:{
-                                    type:String,
-                                    require:true,            
-                              }
-                        }
-                  ]
-            }
-      ]
+      title:{
+            type:String,
+           
+      },
+      date:{
+            type:String,
+            
+      },
+      batch:{
+            type:String,
+               
+      },
+      starttime:{
+            type:String,
+              
+      },
+      endtime:{
+            type:String,
+           
+      },
+      remarks:{
+            type:String,
+           
+      }
 
 })
 

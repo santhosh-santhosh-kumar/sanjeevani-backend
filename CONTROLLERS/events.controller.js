@@ -1,8 +1,9 @@
 const eventsModel = require("../MODEL/events.model");
-const { ObjectId } = require("mongodb");
-const { default: mongoose } = require("mongoose");
 
-//*************************get for fandq***************************
+const { default: mongoose } = require("mongoose");
+const { MongoClient, ObjectId } = require("mongodb");
+
+//*************************get for Events***************************
 const getAllEvents = async (req, res) => {
   try {
     const allEvents = await eventsModel.find();
@@ -12,7 +13,7 @@ const getAllEvents = async (req, res) => {
   }
 };
 
-//*************************single fandq get*******************************
+//*************************single Events get*******************************
 
 const getSingleEvents = async (req, res) => {
   try {
@@ -32,60 +33,9 @@ const getSingleEvents = async (req, res) => {
 
 const postEvents = async (req, res) => {
   try {
-    const { eventName, eventDate, remarks, time } = req.body;
-
-    if (!eventName || !eventDate || !remarks || !time) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
-    const date = new Date(eventDate);
-    const monthNumber = date.getMonth();
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
-    const month = months[monthNumber];
-    const eventDoc = await eventsModel.findOne({ "events.month": month });
-
-    if (eventDoc) {
-      const monthIndex = eventDoc.events.findIndex(
-        (event) => event.month === month
-      );
-      eventDoc.events[monthIndex].eventsList.push({
-        eventName,
-        eventDate,
-        remarks,
-        time,
-      });
-
-      await eventDoc.save();
-      res.status(201).json({ eventDoc });
-    } else {
+    const { title, date, batch, starttime, endtime, remarks } = req.body;
       const newEvent = new eventsModel({
-        events: [
-          {
-            month,
-            eventsList: [
-              {
-                eventName,
-                eventDate,
-                remarks,
-                time,
-              },
-            ],
-          },
-        ],
+        title, date, batch, starttime, endtime, remarks
       });
 
       await newEvent.save();
@@ -94,63 +44,39 @@ const postEvents = async (req, res) => {
         data: newEvent,
       });
     }
-  } catch (err) {
+   catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-//********************************put for fandq********************************
+//********************************put for Events********************************
 
 const putEvents = async (req, res) => {
   const { month, eventName, eventDate, remarks, time } = req.body;
   console.log(req.body);
   try {
-    const updatedEvent = await eventsModel.findOneAndUpdate(
-      {
-        "events.month": month,
-        "events.eventsList.eventName": eventName,
-      },
-      {
-        $set: {
-          "events.$.eventsList.$[elem].eventDate": eventDate,
-          "events.$.eventsList.$[elem].remarks": remarks,
-          "events.$.eventsList.$[elem].time": time,
-        },
-      },
-      {
-        arrayFilters: [{ "elem.eventName": eventName }],
-        new: true,
-      }
-    );
-
-    if (!updatedEvent) {
-      return res.status(404).json({ message: "Event not found" });
-    }
-
+    const updatedEvent = await eventsModel.findOneAndUpdate({ _id: new ObjectId(req.params.id) },
+    { $set: req.body });
     res.status(200).json(updatedEvent);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-module.exports = putEvents;
 
-//************************delete for fandq***************************
+//************************delete for Events***************************
 
 const deleteEvents = async (req, res) => {
-      const { id } = req.params;
-  console.log(id);
   try {
-    const deletedEvent = await eventsModel.findOne({"eventsList._id":new mongoose.Types.ObjectId(id)});
-console.log(deletedEvent)
- 
-    if (deletedEvent)
-      if (!deletedEvent) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-    res.json({ message: "Delete successfully" });
+
+    const eventId = req.params.id;
+    const deleteEvent = await eventsModel.findOneAndDelete({ _id: new ObjectId(eventId) });
+    if (!deleteEvent) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+      res.json({ message: "Event deleted successfully" , deleteEvent });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 

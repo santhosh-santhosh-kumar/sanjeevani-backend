@@ -12,7 +12,13 @@ const schema=new Schema({
       confirm_password:{
             type:String,
             require:true,            
-      }
+      },
+      fullName : { type: String },
+      phone : { type: Number },
+      email : { type: String },
+      address : { type: String },
+      imageUrls: { type: String },
+      fileName: { type: String },
 })
 
 const adminUser=model("adminUser",schema)

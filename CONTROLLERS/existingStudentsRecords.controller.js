@@ -118,7 +118,7 @@ const postExistingStudentsRecords = async (req, res) => {
   const year = today.getFullYear();
   let monthlyFee = received_payment;
   if (req.file) {
-    imageUrls = `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`;
+    imageUrls = `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`;
     filename = req.file.filename;
   } else {
     imageUrls = req.body.imageUrls;
@@ -169,8 +169,9 @@ const postExistingStudentsRecords = async (req, res) => {
             attentancemonth: months[today.getMonth() + 1],
             details: [
               {
-                attentanceStatus,
-                attentanceDate,
+                attentanceStatus:true,
+                attentanceDate:`${day}/${month}/${year}`,
+                day:`${day}`
               },
             ],
           },
@@ -256,21 +257,20 @@ const postExistingStudentsRecords = async (req, res) => {
         
         for (let data of attentanceData) {
           findStudent = await existingStudentsRecords.findOne({ studentID: data.studentId })
-          // console.log("findStudent",findStudent)
           const newAttendance = {
             attentanceStatus: data.attentanceStatus,
             attentanceDate: `${day}/${month}/${year}`,
+            day:`${day}`
           };
           const existingMonthEntry = findStudent.attentance.find(
             (entry) => entry.attentancemonth === data.month
           );
-          
           if (existingMonthEntry) {
             console.log("entry new")
-            // If the month exists, add the new attendance status to that month
+        
             existingMonthEntry.details.push(newAttendance);
           } else {
-            // If the month doesn't exist, create a new entry for the month
+          
             findStudent.attentance.push({
               attentancemonth: data.month,
               details: [newAttendance],
@@ -315,10 +315,18 @@ const postExistingStudentsRecords = async (req, res) => {
 
 //********************************update for students records********************************
 const updateExistingStudentsRecords = async (req, res) => {
+console.log("edit",req.file)
+console.log("edit",req.body)
   try {
+    let updatedData = { ...req.body }; 
+    if (req.file) {
+      const imageUrls = `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`;
+      updatedData.imageUrls = imageUrls;
+      updatedData.fileName = req.file.fileName;
+    }  
     const updatedStudent = await existingStudentsRecords.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updatedData,
       { new: true }
     );
     res.status(200).json(updatedStudent);

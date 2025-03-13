@@ -44,7 +44,7 @@ const getSingleStudentsRecords = async (req, res) => {
 //post methode for adding new students..........................................
 
 const postStudentsRecords = async (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   console.log(req.file);
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
@@ -123,7 +123,7 @@ const postStudentsRecords = async (req, res) => {
     paymentDue = 0;
     dueMonthCount = 0;
 
-    const imageUrls = `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`;
+   
 
     const filename = req.file.filename;
     const counter = await Counter.findOneAndUpdate(
@@ -168,7 +168,7 @@ const postStudentsRecords = async (req, res) => {
       paymentTotal,
       paymentDue,
       dueMonthCount,
-      imageUrls: `https://api-sanjeevani.konceptsdandd.com/ASSETS/studentRecords/${req.file.filename}`,
+      imageUrls: `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`,
       filename,
     });
     await newStudent.save();
