@@ -80,7 +80,7 @@ const updateRegister = async (req, res) => {
     if (req.file) {
       const imageUrls = `https://api-sanjeevani.tejusdigi.com/ASSETS/admin/${req.file.filename}`;
       updatedData.imageUrls = imageUrls;
-      updatedData.fileName = req.file.filename;
+      updatedData.fileName = req.file.fileName;
     }
 
     const updatedAdmin = await adminUser.findByIdAndUpdate(id, updatedData, { new: true });

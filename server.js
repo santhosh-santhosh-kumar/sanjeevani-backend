@@ -3,20 +3,22 @@ const dotenv = require("dotenv").config();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const connectDB = require("./DATABASE/db");
+const path = require("path");
 
 const payment = require("./ROUTES/payemts.route");
 const studentEntroll = require("./ROUTES/studentsRecords.route");
 const existingstudents = require("./ROUTES/existingStudentsRecords.route");
 const adminRegister = require("./ROUTES/adminRegister.route");
 const adminLogin = require("./ROUTES/adminLogin.route");
-const studentRegister=require("./ROUTES/studentRegister.route")
-const studentLogin=require("./ROUTES/studentsLogin")
-const events=require("./ROUTES/events.route")
+const studentRegister = require("./ROUTES/studentRegister.route");
+const studentLogin = require("./ROUTES/studentsLogin");
+const events = require("./ROUTES/events.route");
 const app = express();
 connectDB();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/ASSETS", express.static(path.join(__dirname, "ASSETS")));
 
 const PORT = process.env.PORT || 3000;
 
@@ -27,7 +29,7 @@ app.use("/adminRegister", adminRegister);
 app.use("/adminLogin", adminLogin);
 app.use("/studentRegister", studentRegister);
 app.use("/studentLogin", studentLogin);
-app.use("/events",events)
+app.use("/events", events);
 
 //app listen..................
 app.get("/", (req, res) => {
