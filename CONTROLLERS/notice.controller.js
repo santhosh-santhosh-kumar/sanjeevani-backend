@@ -32,6 +32,7 @@ const getSingleNotice = async (req, res) => {
 //***********************************post for Notice****************************
 
 const postNotice = async (req, res) => {
+      console.log(req.body)
   try {
     const { notice, remark } = req.body;
       const newNotice = new noticeModel({

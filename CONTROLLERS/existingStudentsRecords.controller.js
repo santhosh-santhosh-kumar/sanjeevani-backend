@@ -2,12 +2,41 @@ const existingStudentsRecords = require("../MODEL/existingStudentsRecords.model"
 const fs = require("fs");
 const { MongoClient, ObjectId } = require("mongodb");
 const cron = require("node-cron");
-
+const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+dotenv.config();
 //get methode - all.................................
 const getAllExistingStudentsRecords = async (req, res) => {
+  console.log("req.body", req.body);
   try {
     const getAllExistingStudentsRecords = await existingStudentsRecords.find();
-    res.status(200).send(getAllExistingStudentsRecords);
+
+    if (req.body.loginStatus) {
+      const findUser = await existingStudentsRecords.findOne({
+        userName: req.body.userName,
+      });
+      if (!findUser) {
+        console.log("not");
+        return res.status(400).send("User not Found");
+      }
+      if (!validatePassword) {
+        return res.status(400).send("Invalid credentials");
+      }
+      const userId = { id: findUser._id };
+      if (validatePassword) {
+        console.log("success");
+        const accessToken = jwt.sign(
+          { userId },
+          process.env.STUDENT_SECRET_KEY,
+          {
+            expiresIn: "1h",
+          }
+        );
+        res.status(200).send(accessToken);
+      }
+    } else {
+      res.status(200).send(getAllExistingStudentsRecords);
+    }
   } catch (err) {
     res.status(404).send({ err: err.message });
   }
@@ -29,10 +58,12 @@ const getAllExistingStudentsRecords = async (req, res) => {
 //get methode - single..............................................
 
 const getSingleExistingStudentsRecords = async (req, res) => {
+  console.log(req.body);
   try {
     const getStudentRecord = await existingStudentsRecords.findById(
       req.params.id
     );
+
     res.status(200).json(getStudentRecord);
   } catch (err) {
     res.status(401).json({ err: err.message });
@@ -103,16 +134,15 @@ const postExistingStudentsRecords = async (req, res) => {
     paymentDue,
     dueMonthCount,
     leaveMonth,
+    leaveStatus,
     reason,
     noOfDaysLeave,
-    leaveDate,
+    fromDate,
+    toDate,
     imageUrls,
     filename,
   } = req.body;
 
-  // console.log("req.body", req.body);
-
-  // console.log("req.file", req.file);
   const day = String(today.getDate()).padStart(2, "0");
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const year = today.getFullYear();
@@ -125,9 +155,9 @@ const postExistingStudentsRecords = async (req, res) => {
     filename = req.body.filename;
   }
 
-  // console.log(imageUrl);
-  // const filename = req.file.filename;
-
+  //  fromDate = parse(fromDate, "dd/MM/yyyy", new Date());
+  //  toDate = parse(toDate, "dd/MM/yyyy", new Date());
+  //  noOfDaysLeave = differenceInCalendarDays(toDate, fromDate);
   try {
     //find student Records...........................
 
@@ -169,9 +199,9 @@ const postExistingStudentsRecords = async (req, res) => {
             attentancemonth: months[today.getMonth() + 1],
             details: [
               {
-                attentanceStatus:true,
-                attentanceDate:`${day}/${month}/${year}`,
-                day:`${day}`
+                attentanceStatus: true,
+                attentanceDate: `${day}/${month}/${year}`,
+                day: `${day}`,
               },
             ],
           },
@@ -191,14 +221,10 @@ const postExistingStudentsRecords = async (req, res) => {
         dueMonthCount: 0,
         leaveUpdation: [
           {
-            leaveMonth,
-            updates: [
-              {
-                reason,
-                noOfDaysLeave,
-                leaveDate,
-              },
-            ],
+            reason,
+            noOfDaysLeave,
+            fromDate,
+            toDate,
           },
         ],
         imageUrls,
@@ -250,62 +276,60 @@ const postExistingStudentsRecords = async (req, res) => {
       //while attentance update...................
 
       //attendence
-      let findStudent
+      let findStudent;
       if (attentanceData) {
         attentancemonth = months[today.getMonth() + 1];
         console.log("attentanceStatus......................");
-        
+
         for (let data of attentanceData) {
-          findStudent = await existingStudentsRecords.findOne({ studentID: data.studentId })
+          findStudent = await existingStudentsRecords.findOne({
+            studentID: data.studentId,
+          });
           const newAttendance = {
             attentanceStatus: data.attentanceStatus,
-            attentanceDate:  new Date(`${year}-${month}-${day}`),
-            day:`${day}`
+            attentanceDate: new Date(`${year}-${month}-${day}`),
+            day: `${day}`,
           };
           const existingMonthEntry = findStudent.attentance.find(
             (entry) => entry.attentancemonth === data.month
           );
           if (existingMonthEntry) {
-            console.log("entry new")
-        
+            console.log("entry new");
+
             existingMonthEntry.details.push(newAttendance);
           } else {
-          
             findStudent.attentance.push({
               attentancemonth: data.month,
               details: [newAttendance],
             });
           }
           await findStudent.save();
-        };
-        
+        }
+
         console.log("finish");
       }
 
       //Leave update.....................
 
-      if (leaveMonth) {
+      if (leaveStatus) {
         console.log("eaveMonth......................");
-        let leaveEntry = findStudentId.leaveUpdation.find(
-          (entry) => entry.leaveMonth === leaveMonth
-        );
-
-        if (leaveEntry) {
-          leaveEntry.updates.push({ reason, noOfDaysLeave, leaveDate });
-        } else {
-          findStudentId.leaveUpdation.push({
-            leaveMonth,
-            updates: [{ reason, noOfDaysLeave, leaveDate }],
-          });
-        }
+        findStudentId.leaveUpdation.push({
+          reason,
+          noOfDaysLeave,
+          fromDate,
+          toDate,
+        });
         findStudentId.markModified("leaveUpdation");
       }
-    if(!attentanceData){
-      await findStudentId
-      .save()
-      .then(() => console.log("Student records updated and saved in MongoDB"))
-      .catch((err) => console.error(" Error saving Students:", err));
-    }
+
+      if (!attentanceData) {
+        await findStudentId
+          .save()
+          .then(() =>
+            console.log("Student records updated and saved in MongoDB")
+          )
+          .catch((err) => console.error(" Error saving Students:", err));
+      }
       res.status(200).send("Student records updated");
     }
   } catch (err) {
@@ -315,23 +339,25 @@ const postExistingStudentsRecords = async (req, res) => {
 
 //********************************update for students records********************************
 const updateExistingStudentsRecords = async (req, res) => {
-console.log("edit",req.file)
-console.log("edit",req.body)
+  console.log("edit", req.file);
+  console.log("edit", req.body);
   try {
-    let updatedData = { ...req.body }; 
+    let updatedData = { ...req.body };
     if (req.file) {
       const imageUrls = `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`;
       updatedData.imageUrls = imageUrls;
       updatedData.fileName = req.file.fileName;
-    }  
+    }
     const updatedStudent = await existingStudentsRecords.findByIdAndUpdate(
       req.params.id,
       updatedData,
       { new: true }
     );
     res.status(200).json(updatedStudent);
+    console.log("success");
   } catch (err) {
     res.status(400).json({ message: err.message });
+    console.log("fail");
   }
 };
 
@@ -344,7 +370,7 @@ const deleteExistingStudentsRecords = async (req, res) => {
       return res.status(404).json({ error: "Record not found" });
     }
 
-    if (student.image) {
+    if (student.imageUrls) {
       const filePath = path.join(
         __dirname,
         "../ASSETS/existingStudentsRecords",

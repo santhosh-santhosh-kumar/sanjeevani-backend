@@ -24,7 +24,7 @@ router.post('/',upload.single("image"),postExistingStudentsRecords);
 
 
 //update for student records
-router.put('/:id',validateObjectId,upload.single("image"), updateExistingStudentsRecords);
+router.put('/:id',upload.single("image"), updateExistingStudentsRecords);
 
 
 //delete for student records

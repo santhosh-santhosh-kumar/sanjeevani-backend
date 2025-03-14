@@ -6,7 +6,7 @@ const dotenv = require("dotenv");
 const route = express.Router();
 
 
-dotenv.config();
+
 
 const authorize = (req, res, next) => {
   if (req.headers.authorization) {

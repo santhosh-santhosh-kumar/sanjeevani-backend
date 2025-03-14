@@ -5,7 +5,7 @@ const schema = new Schema({
   studentID:{type: String, require: true},
   status:{ type: Boolean, require: true },
   fullName: { type: String, require: true },
-  dob: { type: Date, require: true },
+  dob: { type:String, require: true },
   age: { type: Number, require: true },
   gender: { type: String, require: true },
   email: { type: String, require: true },
@@ -16,7 +16,7 @@ const schema = new Schema({
   phone: { type: Number, require: true },
   individuals: { type: String, require: true },
   residentialAddress: { type: String, require: true },
-  join_date: { type: Date },
+  join_date: { type:String },
   batchID: { type: String, require: true },
   userName: { type: String, require: true },
   password: { type: String, require: true },
@@ -29,7 +29,7 @@ const schema = new Schema({
       details: [
         {
           attentanceStatus: { type: Boolean, require: true },
-          attentanceDate: { type: Date },
+          attentanceDate: { type:String },
           day: { type: Number, require: true },
         },
       ],
@@ -43,7 +43,7 @@ const schema = new Schema({
       paymentOderID: String,
       paymentID: String,
       payment_status: { type: Boolean, require: true },
-      paid_date: { type: Date,},
+      paid_date: { type:String,},
       received_payment: { type: Number },
       paymentPerMonthTotal: { type: Number, require: true },
     },
@@ -53,14 +53,10 @@ const schema = new Schema({
   dueMonthCount: { type: Number, require: true },
   leaveUpdation: [
     {
-      leaveMonth: String,
-      updates: [
-        {
-          reason: String,
-          noOfDaysLeave: Number,
-          leaveDate: Date,
-        },
-      ],
+      reason: String,
+      noOfDaysLeave: Number,
+      fromDate:String,
+      toDate:String,
     },
   ],
 });
