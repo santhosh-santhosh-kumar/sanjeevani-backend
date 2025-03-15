@@ -2,7 +2,7 @@ const express=require("express")
 const upload=require("../MULTER/studentsRecords.multer")
 const mongoose = require("mongoose");
 
-const {getAllExistingStudentsRecords,getSingleExistingStudentsRecords,postExistingStudentsRecords,updateExistingStudentsRecords,deleteExistingStudentsRecords} =require("../CONTROLLERS/existingStudentsRecords.controller")
+const {getAllExistingStudentsRecords,getSingleExistingStudentsRecords,postExistingStudentsRecords,postManualPayment,updateExistingStudentsRecords,postPayment,deleteExistingStudentsRecords} =require("../CONTROLLERS/existingStudentsRecords.controller")
 
 const router=express.Router()
 
@@ -12,6 +12,7 @@ const validateObjectId = (req, res, next) => {
       }
       next();
     };
+  
 //get for all students records
 router.get('/', getAllExistingStudentsRecords);
 
@@ -22,6 +23,11 @@ router.get('/:id', getSingleExistingStudentsRecords);
 //post for student records
 router.post('/',upload.single("image"),postExistingStudentsRecords);
 
+//payment post.......................
+router.post('/existStudentPayment',postPayment);
+
+//payment post.......................
+router.post('/existStudentManualPayment',postManualPayment);
 
 //update for student records
 router.put('/:id',upload.single("image"), updateExistingStudentsRecords);

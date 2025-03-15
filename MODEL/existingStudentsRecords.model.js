@@ -41,7 +41,8 @@ const schema = new Schema({
     {
       monthName: String,
       paymentOderID: String,
-      paymentID: String,
+      invoiceNumber:String,
+      paymentId: String,
       payment_status: { type: Boolean, require: true },
       paid_date: { type:String,},
       received_payment: { type: Number },

@@ -123,8 +123,6 @@ const postStudentsRecords = async (req, res) => {
     paymentDue = 0;
     dueMonthCount = 0;
 
-   
-
     const filename = req.file.filename;
     const counter = await Counter.findOneAndUpdate(
       { name: "studentId" },
@@ -168,7 +166,7 @@ const postStudentsRecords = async (req, res) => {
       paymentTotal,
       paymentDue,
       dueMonthCount,
-      imageUrls: `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`,
+      imageUrls: `https://sanjeevani.tejusdigi.com/ASSETS/studentRecords/${req.file.filename}`,
       filename,
     });
     await newStudent.save();

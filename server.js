@@ -13,7 +13,7 @@ const adminLogin = require("./ROUTES/adminLogin.route");
 const studentRegister = require("./ROUTES/studentRegister.route");
 const studentLogin = require("./ROUTES/studentsLogin");
 const events = require("./ROUTES/events.route");
-const notice=require("./ROUTES/notice.route")
+const notice = require("./ROUTES/notice.route");
 const app = express();
 connectDB();
 app.use(cors());

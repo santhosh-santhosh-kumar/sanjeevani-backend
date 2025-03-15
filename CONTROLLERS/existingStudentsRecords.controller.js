@@ -4,7 +4,31 @@ const { MongoClient, ObjectId } = require("mongodb");
 const cron = require("node-cron");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
+const { ulid } = require("ulid");
+
 dotenv.config();
+const fullUlid = ulid();
+const shortUlid = parseInt(fullUlid.slice(0, 6), 36);
+const today = new Date();
+const months = {
+  1: "January",
+  2: "February",
+  3: "March",
+  4: "April",
+  5: "May",
+  6: "June",
+  7: "July",
+  8: "August",
+  9: "September",
+  10: "October",
+  11: "November",
+  12: "December",
+};
+
+const day = String(today.getDate()).padStart(2, "0");
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const year = today.getFullYear();
+
 //get methode - all.................................
 const getAllExistingStudentsRecords = async (req, res) => {
   console.log("req.body", req.body);
@@ -42,19 +66,6 @@ const getAllExistingStudentsRecords = async (req, res) => {
   }
 };
 
-//corn scuhedule for update students payment status = false...................
-
-// cron.schedule("* * * 1 *", async () => {
-//   try {
-//     await existingStudentsRecords.updateMany(
-//       { payment_status: true },
-//       { $set: { payment_status: false } }
-//     );
-//   } catch (error) {
-//     console.error(error);
-//   }
-// });
-
 //get methode - single..............................................
 
 const getSingleExistingStudentsRecords = async (req, res) => {
@@ -73,22 +84,6 @@ const getSingleExistingStudentsRecords = async (req, res) => {
 //post methode for adding existing students..........................................
 
 const postExistingStudentsRecords = async (req, res) => {
-  const today = new Date();
-  const months = {
-    1: "January",
-    2: "February",
-    3: "March",
-    4: "April",
-    5: "May",
-    6: "June",
-    7: "July",
-    8: "August",
-    9: "September",
-    10: "October",
-    11: "November",
-    12: "December",
-  };
-
   let monthCount = today.getMonth() + 1;
   let attentanceData;
   if (Array.isArray(req.body)) {
@@ -125,7 +120,7 @@ const postExistingStudentsRecords = async (req, res) => {
     attentanceDate,
     monthName,
     paymentOderID,
-    paymentID,
+    paymentId,
     payment_status,
     paid_date,
     paymentRecords,
@@ -143,21 +138,15 @@ const postExistingStudentsRecords = async (req, res) => {
     filename,
   } = req.body;
 
-  const day = String(today.getDate()).padStart(2, "0");
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const year = today.getFullYear();
-  let monthlyFee = received_payment;
+  received_payment = received_payment / 100;
   if (req.file) {
-    imageUrls = `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`;
+    imageUrls = `https://api-sanjeevani.tejusdigi.com/ASSETS/studentRecords/${req.file.filename}`;
     filename = req.file.filename;
   } else {
     imageUrls = req.body.imageUrls;
     filename = req.body.filename;
   }
 
-  //  fromDate = parse(fromDate, "dd/MM/yyyy", new Date());
-  //  toDate = parse(toDate, "dd/MM/yyyy", new Date());
-  //  noOfDaysLeave = differenceInCalendarDays(toDate, fromDate);
   try {
     //find student Records...........................
 
@@ -210,7 +199,8 @@ const postExistingStudentsRecords = async (req, res) => {
           {
             monthName: months[today.getMonth() + 1],
             paymentOderID,
-            paymentID,
+            paymentId,
+            invoiceNumber: "IN" + shortUlid,
             payment_status: true,
             paid_date: `${day}/${month}/${year}`,
             received_payment,
@@ -237,41 +227,7 @@ const postExistingStudentsRecords = async (req, res) => {
       console.log("New student records add................");
     } else {
       console.log("student  found");
-      // if student already exist.........................
-
-      //while amount paid ..............................
-      if (paymentID) {
-        console.log("Payment id......................");
-        let updatedPaymentTotal = findStudentId.paymentTotal + received_payment;
-        console.log("Payment id......................1");
-        let updatedPaymentDue = Math.max(
-          0,
-          findStudentId.dueMonthCount * monthlyFee - updatedPaymentTotal
-        );
-        let updatedDueMonthCount;
-
-        updatedDueMonthCount = Math.ceil(updatedPaymentDue / received_payment);
-        console.log("Payment id......................2");
-        findStudentId.paymentRecords.push({
-          monthName: months[today.getMonth() + 1],
-          paymentOderID,
-          paymentID,
-          payment_status,
-          paid_date: `${day}/${month}/${year}`,
-          received_payment: received_payment,
-        });
-        console.log("Payment id......................3");
-        console.log(
-          updatedPaymentTotal,
-          updatedPaymentDue,
-          updatedDueMonthCount
-        );
-        findStudentId.paymentTotal = updatedPaymentTotal;
-        findStudentId.paymentDue = updatedPaymentDue;
-        // findStudentId.dueMonthCount = updatedDueMonthCount;
-
-        findStudentId.markModified("paymentRecords");
-      }
+      // if student already exist........................
 
       //while attentance update...................
 
@@ -337,6 +293,65 @@ const postExistingStudentsRecords = async (req, res) => {
   }
 };
 
+//post payment..............................................
+const postPayment = async (req, res) => {
+  let { paymentOderID, paymentId, payment_status, received_payment } = req.body;
+  received_payment = received_payment / 100;
+  console.log("received_payment", received_payment);
+  try {
+    const findStudent = await existingStudentsRecords.findById(req.body._id);
+    console.log(findStudent);
+    let updatedPaymentTotal = findStudent.paymentTotal + received_payment;
+
+    findStudent.paymentRecords.push({
+      monthName: months[today.getMonth() + 1],
+      paymentOderID,
+      paymentId,
+      invoiceNumber: "IN" + shortUlid,
+      payment_status: true,
+      paid_date: `${day}/${month}/${year}`,
+      received_payment,
+    });
+    findStudent.paymentTotal = updatedPaymentTotal;
+    findStudent.markModified("paymentRecords");
+    await findStudent.save();
+    return res.status(200).json(findStudent);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+};
+
+//post manual payment..............................................
+const postManualPayment = async (req, res) => {
+  let { paymentOderID, paymentId, payment_status, received_payment } = req.body;
+  console.log("Manual",req.body);
+  received_payment = received_payment / 100;
+  console.log("received_payment", received_payment);
+  try {
+    const findStudent = await existingStudentsRecords.findOne({studentID:req.body.student_id});
+    console.log(findStudent);
+    // let updatedPaymentTotal = findStudent.paymentTotal + received_payment;
+
+    // findStudent.paymentRecords.push({
+    //   monthName: months[today.getMonth() + 1],
+    //   paymentOderID,
+    //   paymentId,
+    //   invoiceNumber: "IN" + shortUlid,
+    //   payment_status:true,
+    //   paid_date: `${day}/${month}/${year}`,
+    //   received_payment,
+    // });
+    // findStudent.paymentTotal = updatedPaymentTotal;
+    // findStudent.markModified("paymentRecords");
+    // await findStudent.save();
+    return res.status(200).json(findStudent);
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+};
+
 //********************************update for students records********************************
 const updateExistingStudentsRecords = async (req, res) => {
   console.log("edit", req.file);
@@ -344,7 +359,7 @@ const updateExistingStudentsRecords = async (req, res) => {
   try {
     let updatedData = { ...req.body };
     if (req.file) {
-      const imageUrls = `http://localhost:3000/ASSETS/studentRecords/${req.file.filename}`;
+      const imageUrls = `https://api-sanjeevani.tejusdigi.com/ASSETS/studentRecords/${req.file.filename}`;
       updatedData.imageUrls = imageUrls;
       updatedData.fileName = req.file.fileName;
     }
@@ -389,10 +404,25 @@ const deleteExistingStudentsRecords = async (req, res) => {
   }
 };
 
+const forgotpassword = async () => {
+  const { email } = req.body;
+  try {
+    const findUser = await existingStudentsRecords.findOne({ email });
+
+    if (!findUser) {
+      res.send(400).status("User Not Found");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   getAllExistingStudentsRecords,
   getSingleExistingStudentsRecords,
   postExistingStudentsRecords,
+  postPayment,
+  postManualPayment,
   updateExistingStudentsRecords,
   deleteExistingStudentsRecords,
 };
